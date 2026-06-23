@@ -10,7 +10,7 @@ run:
 	docker compose up -d --build
 
 test:
-	docker run --rm -v "$(CURDIR)":/app -w /app $(IMAGE_NAME):latest pytest tests/ -v --cov=src --cov-report=term-missing
+	docker run --rm -v "$(CURDIR)":/app -w //app $(IMAGE_NAME):latest pytest tests/ -v --cov=src --cov-report=term-missing
 
 stop:
 	docker compose down
