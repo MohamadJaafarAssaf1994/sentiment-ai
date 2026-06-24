@@ -75,10 +75,8 @@ pipeline {
                 )]) {
                     sh """
                         echo \$REGISTRY_PASS | docker login ghcr.io -u \$REGISTRY_USER --password-stdin
-
                         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
                         docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-
                         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${REGISTRY}/${IMAGE_NAME}:latest
                         docker push ${REGISTRY}/${IMAGE_NAME}:latest
                     """
