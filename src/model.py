@@ -1,3 +1,7 @@
+#   def legacy_predict(text):
+#     if text == "":
+#         return "NEGATIVE"
+#     return "POSITIVE"
 class SentimentModel:
     def __init__(self):
         print("[SentimentModel] Modele charge")
@@ -34,9 +38,3 @@ class SentimentModel:
             "score": 0.5,
             "text": text,
         }
-
-
-#   def legacy_predict(text):
-#     if text == "":
-#         return "NEGATIVE"
-#     return "POSITIVE"
