@@ -1,4 +1,3 @@
-```groovy
 // Jenkinsfile - Pipeline CI/CD SentimentAI - TP3 Step 2 SonarQube
 
 pipeline {
@@ -150,4 +149,3 @@ pipeline {
         }
     }
 }
-```
