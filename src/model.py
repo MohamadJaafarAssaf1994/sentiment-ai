@@ -34,3 +34,9 @@ class SentimentModel:
             "score": 0.5,
             "text": text,
         }
+
+
+#   def legacy_predict(text):
+#     if text == "":
+#         return "NEGATIVE"
+#     return "POSITIVE"
