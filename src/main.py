@@ -17,3 +17,5 @@ def health():
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
     return model.predict(request.text)
+
+# Test automatic Jenkins trigger
