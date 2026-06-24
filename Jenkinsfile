@@ -61,7 +61,11 @@ pipeline {
 
         stage('Push') {
             when {
-                branch 'main'
+                anyOf {
+                    branch 'main'
+                    expression { env.GIT_BRANCH == 'origin/main' }
+                    expression { env.GIT_BRANCH == 'main' }
+                }
             }
             steps {
                 withCredentials([usernamePassword(
