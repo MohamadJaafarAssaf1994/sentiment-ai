@@ -6,19 +6,13 @@ pipeline {
     environment {
         IMAGE_NAME = 'sentiment-ai'
         REGISTRY = 'ghcr.io/mohamadjaafarassaf1994'
-        IMAGE_TAG = ''
+        IMAGE_TAG  = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
     }
 
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-                script {
-                    env.IMAGE_TAG = sh(
-                        script: 'git rev-parse --short HEAD',
-                        returnStdout: true
-                    ).trim()
-                }
                 echo "Branch: ${env.BRANCH_NAME}"
                 echo "Git branch: ${env.GIT_BRANCH}"
                 echo "Commit: ${env.GIT_COMMIT}"
