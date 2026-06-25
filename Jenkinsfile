@@ -156,15 +156,18 @@ pipeline {
                 }
             }
             steps {
-                echo "Déploiement de ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} en staging..."
+                echo "Déploiement de ${IMAGE_NAME}:${IMAGE_TAG} en staging..."
                 sh '''
-                # Arrêter le staging précédent proprement
-                docker compose -f docker-compose.yml -p staging down 2>/dev/null || true
+                docker rm -f sentiment-staging 2>/dev/null || true
 
-                # Démarrer la nouvelle version
-                docker compose -f docker-compose.yml -p staging up -d
+                docker run -d \
+                --name sentiment-staging \
+                --network cicd-network \
+                -p 8001:8000 \
+                ${IMAGE_NAME}:${IMAGE_TAG}
 
-                echo "Staging disponible sur http://localhost:8001"
+                sleep 5
+                curl -f http://localhost:8001/health
                 '''
             }
         }
@@ -172,10 +175,7 @@ pipeline {
 
     post {
         always {
-            sh '''
-                docker rm -f test-runner 2>/dev/null || true
-                docker compose down -v 2>/dev/null || true
-            '''
+            sh 'docker rm -f test-runner 2>/dev/null || true'
         }
         success {
             echo "Pipeline réussi ! Image : ${env.REGISTRY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
