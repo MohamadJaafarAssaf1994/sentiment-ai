@@ -167,7 +167,8 @@ pipeline {
                 ${IMAGE_NAME}:${IMAGE_TAG}
 
                 sleep 5
-                curl -f http://localhost:8001/health
+
+                docker exec sentiment-staging curl -f http://localhost:8000/health
                 '''
             }
         }
