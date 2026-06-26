@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "docker" {
-  host = "npipe:////./pipe/docker_engine"
+  host = var.docker_host
 }
 
 resource "docker_network" "cicd" {
