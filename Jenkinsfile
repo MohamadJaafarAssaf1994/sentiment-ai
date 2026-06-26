@@ -1,4 +1,4 @@
-// Jenkinsfile - Pipeline CI/CD SentimentAI - TP3 Step 2 SonarQube
+// Jenkinsfile - Pipeline CI/CD SentimentAI - TP4 Terraform & IaC
 
 pipeline {
     agent any
@@ -6,7 +6,7 @@ pipeline {
     environment {
         IMAGE_NAME = 'sentiment-ai'
         REGISTRY = 'ghcr.io/mohamadjaafarassaf1994'
-        IMAGE_TAG  = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        IMAGE_TAG = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
     }
 
     stages {
@@ -30,6 +30,16 @@ pipeline {
                     python:3.12-slim \
                     sh -c "pip install flake8 -q && flake8 src/ --max-line-length=100"
                 '''
+            }
+        }
+
+        stage('IaC Validate') {
+            steps {
+                dir('infra') {
+                    sh 'terraform init -backend=false -input=false'
+                    sh 'terraform fmt -check'
+                    sh 'terraform validate'
+                }
             }
         }
 
@@ -149,25 +159,49 @@ pipeline {
             }
         }
 
-        stage('Deploy Staging') {
+        stage('IaC Apply') {
             when {
-                expression {
-                    return env.BRANCH_NAME == 'main' || env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main'
+                anyOf {
+                    branch 'main'
+                    expression { env.GIT_BRANCH == 'origin/main' }
+                    expression { env.GIT_BRANCH == 'main' }
                 }
             }
             steps {
-                echo "Déploiement de ${IMAGE_NAME}:${IMAGE_TAG} en staging..."
+                dir('infra') {
+                    sh '''
+                    terraform init -input=false
+
+                    if docker network inspect cicd-network >/dev/null 2>&1; then
+                        NETWORK_ID=$(docker network inspect cicd-network --format '{{.Id}}')
+                        terraform import \
+                            -var='docker_host=unix:///var/run/docker.sock' \
+                            docker_network.cicd "$NETWORK_ID" 2>/dev/null || true
+                    fi
+
+                    terraform state show docker_container.sentiment_staging >/dev/null 2>&1 || \
+                        docker rm -f sentiment-staging 2>/dev/null || true
+
+                    terraform apply -auto-approve \
+                        -var='docker_host=unix:///var/run/docker.sock' \
+                        -var="image_tag=${IMAGE_TAG}"
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Staging') {
+            when {
+                anyOf {
+                    branch 'main'
+                    expression { env.GIT_BRANCH == 'origin/main' }
+                    expression { env.GIT_BRANCH == 'main' }
+                }
+            }
+            steps {
+                echo "Vérification du déploiement staging Terraform..."
                 sh '''
-                docker rm -f sentiment-staging 2>/dev/null || true
-
-                docker run -d \
-                --name sentiment-staging \
-                --network cicd-network \
-                -p 8001:8000 \
-                ${IMAGE_NAME}:${IMAGE_TAG}
-
                 sleep 5
-
                 docker exec sentiment-staging curl -f http://localhost:8000/health
                 '''
             }
