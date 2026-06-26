@@ -179,7 +179,7 @@ pipeline {
                             docker_network.cicd "$NETWORK_ID" 2>/dev/null || true
                     fi
 
-                    docker rm -f sentiment-staging 2>/dev/null || true
+                    docker rm -f sentiment-staging prometheus grafana 2>/dev/null || true
 
                     terraform apply -auto-approve \
                         -var='docker_host=unix:///var/run/docker.sock' \
