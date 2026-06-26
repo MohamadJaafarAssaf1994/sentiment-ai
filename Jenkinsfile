@@ -169,8 +169,22 @@ pipeline {
             }
             steps {
                 dir('infra') {
-                    sh 'terraform init -input=false'
-                    sh "terraform apply -auto-approve -var='image_tag=${IMAGE_TAG}'"
+                    sh '''
+                    terraform init -input=false
+
+                    if docker network inspect cicd-network >/dev/null 2>&1; then
+                        NETWORK_ID=$(docker network inspect cicd-network --format '{{.Id}}')
+                        terraform import \
+                            -var='docker_host=unix:///var/run/docker.sock' \
+                            docker_network.cicd "$NETWORK_ID" 2>/dev/null || true
+                    fi
+
+                    docker rm -f sentiment-staging 2>/dev/null || true
+
+                    terraform apply -auto-approve \
+                        -var='docker_host=unix:///var/run/docker.sock' \
+                        -var="image_tag=${IMAGE_TAG}"
+                    '''
                 }
             }
         }

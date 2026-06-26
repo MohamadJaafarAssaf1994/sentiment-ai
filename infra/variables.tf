@@ -21,3 +21,9 @@ variable "registry" {
   type        = string
   default     = "ghcr.io/mohamadjaafarassaf1994"
 }
+
+variable "docker_host" {
+  description = "Docker host used by Terraform"
+  type        = string
+  default     = "npipe:////./pipe/docker_engine"
+}
