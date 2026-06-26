@@ -216,32 +216,42 @@ pipeline {
             }
             steps {
                 sh '''
-                    echo "Attente du démarrage (10s)..."
-                    sleep 10
+                echo "Attente du démarrage (10s)..."
+                sleep 10
 
-                    # 1. L'app répond
-                    curl -f http://localhost:8001/health || exit 1
-                    echo "/health OK"
+                echo "1. Vérification de l'application SentimentAI"
+                docker run --rm --network cicd-network curlimages/curl:8.5.0 \
+                -f http://sentiment-staging:8000/health
+                echo "/health OK"
 
-                    # 2. Les métriques sont exposées
-                    curl -s http://localhost:8001/metrics | grep -q sentiment_predictions_total || exit 1
-                    echo "/metrics OK -- métriques SentimentAI présentes"
+                echo "2. Vérification des métriques applicatives"
+                docker run --rm --network cicd-network curlimages/curl:8.5.0 \
+                -s http://sentiment-staging:8000/metrics | grep -q sentiment_predictions_total
+                echo "/metrics OK"
 
-                    # 3. Prometheus scrape l'app
-                    sleep 20 # attendre au moins 1 scrape (15s)
-                    curl -s "http://localhost:9090/api/v1/query?query=up{job='sentiment-ai'}" | grep -q '"value":.*"1"' || exit 1
-                    echo "Prometheus scrape sentiment-ai : UP"
+                echo "3. Attente du scrape Prometheus..."
+                sleep 20
 
-                    # 4. Grafana répond
-                    curl -f http://localhost:3000/api/health || exit 1
-                    echo "Grafana OK"
+                echo "4. Vérification du target Prometheus sentiment-ai"
+                docker run --rm --network cicd-network curlimages/curl:8.5.0 \
+                -s 'http://prometheus:9090/api/v1/query?query=up%7Bjob%3D%22sentiment-ai%22%7D' | \
+                grep -q '"value":\\[.*,"1"\\]'
+                echo "Prometheus scrape OK"
+
+                echo "5. Vérification de Grafana"
+                docker run --rm --network cicd-network curlimages/curl:8.5.0 \
+                -f http://grafana:3000/api/health
+                echo "Grafana OK"
                 '''
             }
             post {
                 failure {
-                    sh 'docker logs prometheus || true'
-                    sh 'docker logs sentiment-staging || true'
-                    echo 'Smoke Test KO -- voir logs ci-dessus'
+                    sh '''
+                    echo "Smoke Test KO -- logs de diagnostic"
+                    docker logs prometheus || true
+                    docker logs sentiment-staging || true
+                    docker logs grafana || true
+                    '''
                 }
             }
         }
