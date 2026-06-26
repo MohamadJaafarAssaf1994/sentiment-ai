@@ -1,5 +1,11 @@
 resource "docker_image" "prometheus" {
-  name         = "prom/prometheus:latest"
+  name = "sentiment-prometheus:latest"
+
+  build {
+    context    = abspath("${path.module}/../monitoring")
+    dockerfile = "Dockerfile.prometheus"
+  }
+
   keep_locally = true
 }
 
@@ -17,11 +23,10 @@ resource "docker_container" "prometheus" {
     external = 9090
   }
 
-  volumes {
-    host_path      = abspath("${path.module}/../monitoring/prometheus.yml")
-    container_path = "/etc/prometheus/prometheus.yml"
-    read_only      = true
-  }
+  command = [
+    "--config.file=/etc/prometheus/prometheus.yml",
+    "--storage.tsdb.retention.time=15d"
+  ]
 }
 
 resource "docker_image" "grafana" {

@@ -216,7 +216,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    echo "Attente démarrage (10s)..."
+                    echo "Attente du démarrage (10s)..."
                     sleep 10
 
                     # 1. L'app répond
